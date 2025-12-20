@@ -2,6 +2,7 @@
 .SYNOPSIS
 Generates a VS Code Dev Container configured with selectable AI CLI tools.
 Features an interactive menu to toggle Gemini, Copilot, Claude, and Codex.
+Includes .NET SDK, Node.js, and Python.
 
 .EXAMPLE
 .\make-ai-project-container.ps1 my-new-bot
@@ -146,7 +147,7 @@ ENV PATH="/home/vscode/.local/bin:`$PATH"
 $postCreateCmd = "echo '--- AUTHENTICATION ---' && " + (($selectedTools.AuthCmd) -join " && ")
 
 # Dynamic extensions
-$extensions = @("ms-python.python")
+$extensions = @("ms-python.python", "ms-dotnettools.csharp")
 if ($selectedTools.Id -contains "copilot") { $extensions += "GitHub.copilot"; $extensions += "GitHub.copilot-chat" }
 if ($selectedTools.Id -contains "gemini")  { $extensions += "Google.gemini-code-assist" }
 
@@ -156,12 +157,16 @@ $defaultName = Split-Path -Path $targetPath -Leaf
 $userContainerName = Read-Host "`nEnter Container Name [Default: $defaultName]"
 if ([string]::IsNullOrWhiteSpace($userContainerName)) { $userContainerName = $defaultName }
 
+# UPDATED: Added dotnet:2 feature and C# extension
 $devcontainerContent = @"
 {
   "name": "$userContainerName (AI)",
   "build": { "dockerfile": "Dockerfile" },
   "remoteUser": "vscode",
-  "features": { "ghcr.io/devcontainers/features/git:1": {} },
+  "features": { 
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/dotnet:2": { "version": "latest" }
+  },
   "customizations": {
     "vscode": { "extensions": $extensionsJson }
   },
@@ -173,5 +178,5 @@ $devcontainerContent = @"
 Set-Content -Path "$devContainerPath\Dockerfile" -Value $dockerfileContent
 Set-Content -Path "$devContainerPath\devcontainer.json" -Value $devcontainerContent
 
-Write-Host "`nSuccess! Configured '$userContainerName' with:" -ForegroundColor Green
+Write-Host "`nSuccess! Configured '$userContainerName' with .NET SDK and:" -ForegroundColor Green
 $selectedTools | ForEach-Object { Write-Host " - $($_.Name)" }
